@@ -36,6 +36,7 @@ def getPontosOlho(landmarks,pontos):
     
 while True:
     _, quadro = cap.read()
+    quadro_cinza = cv2.cvtColor(quadro,cv2.COLOR_BGR2GRAY)
 
     rostos = detector(quadro)
     for rosto in rostos:
@@ -47,12 +48,36 @@ while True:
         piscadaEsquerdo = getPiscada([36,37,38,39,40,41],landmarks)
         piscadaDireito = getPiscada([42,43,44,45,46,47],landmarks)
         
-        
-
-        
         if (piscadaEsquerdo+piscadaDireito)/2 > 4:
             cv2.putText(quadro,"PISCASTE",(50,50),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,255),2,cv2.LINE_AA,False) 
         
+        olho_esquerdo_contorno = np.array([(landmarks.part(36).x,landmarks.part(36).y),
+                                  (landmarks.part(37).x,landmarks.part(37).y),
+                                  (landmarks.part(38).x,landmarks.part(38).y),
+                                  (landmarks.part(39).x,landmarks.part(39).y),
+                                  (landmarks.part(40).x,landmarks.part(40).y),
+                                  (landmarks.part(41).x,landmarks.part(41).y)],np.int32)
+        #cv2.polylines(quadro,[olho_esquerdo_contorno],True,(0,0,255),2) #desenhado um contorno no olho
+        
+        altura,largura,_ = quadro.shape
+        mascara = np.zeros((altura,largura),np.uint8)
+        cv2.polylines(mascara,[olho_esquerdo_contorno],True,255,2)
+        cv2.fillPoly(mascara,[olho_esquerdo_contorno],255)
+        olho_esquerdo = cv2.bitwise_and(quadro_cinza,quadro_cinza,mask=mascara)
+        min_x = np.min(olho_esquerdo_contorno[:,0])
+        max_x = np.max(olho_esquerdo_contorno[:,0])
+        min_y = np.min(olho_esquerdo_contorno[:,1])
+        max_y = np.max(olho_esquerdo_contorno[:,1])
+        
+        olho_cinza = olho_esquerdo[min_y:max_y,min_x:max_x]
+        #olho_gray = cv2.cvtColor(olho,cv2.COLOR_BGR2GRAY) #imagem do olho convertida para escala de cinza para melhor precisão
+        olho = cv2.resize(olho_cinza,None,fx=5,fy=5)
+        
+        _,threshold_olho = cv2.threshold(olho_cinza,70,255,cv2.THRESH_BINARY) #feito threshold na imagem cinza para detectar mais precisamente a direção do olho
+        threshold_olho = cv2.resize(threshold_olho,None,fx=5,fy=5)
+        cv2.imshow("olho",olho)
+        cv2.imshow("threshold",threshold_olho)
+        cv2.imshow("mascara",olho_esquerdo)
     cv2.imshow("quadro",quadro)
 
     key = cv2.waitKey(1)
