@@ -140,7 +140,7 @@ def criaTeclado(index,letra,selector):
     text_y = int((height + height_text) / 2) + y
     cv2.putText(teclado, letra, (text_x, text_y), cv2.FONT_HERSHEY_PLAIN, font_scale, (255, 0, 0), 2)
     
-for i in range(26):
+for i in range(27):
     criaTeclado(i,letras[i],False)
     
 
