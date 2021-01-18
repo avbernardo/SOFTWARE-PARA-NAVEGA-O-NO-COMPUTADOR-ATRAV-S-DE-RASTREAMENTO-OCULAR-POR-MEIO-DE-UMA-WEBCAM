@@ -2,14 +2,239 @@ import cv2
 import numpy as np
 import dlib 
 from math import hypot
+import time
+import ctypes
 olho_direito = list(range(36, 42))
 olho_esquerdo = list(range(42, 48))
 sobrancelha_esquerda = list(range(18,22))
 sobrancelha_direita = list(range(23,27))
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
+seleciona = False
+quadro_texto = np.zeros((200,1080),np.uint8)
+quadro_texto[:] = 255
+user32 = ctypes.windll.user32
+screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
 
 detector = dlib.get_frontal_face_detector() #função da biblioteca dlib para detectar o rosto
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+teclado = np.zeros((500,750,3),np.uint8)
+tela_menu = np.zeros((800,800),np.uint8)
+k = 0
+direcao = 1
+opcao = 2
+
+
+letras = {0: "Q", 1: "W", 2: "E", 3: "R", 4: "T", 5: "Y", 6: "U", 7: "I", 8: "O", 9: "P",
+          10: "A", 11: "S", 12: "D", 13: "F", 14: "G", 15: "H", 16: "J", 17: "K", 18: "L", 19: "C",
+          20: "Z", 21: "X", 22: "C", 23: "V", 24: "B", 25: "N", 26: "M" , 27 : " "}
+
+frases = {0: "OLA", 1: "SIM", 2: "NAO", 3:"ESTOU BEM", 4: "ESTOU MAL", 5: "BANHEIRO", 6: "DESCONFORTO", 7: "FOME", 8: "SEDE",
+          9: "FRIO" , 10: "CALOR"}
+
+def criaTeclado(index,letra,selector):
+    
+    if index == 0:
+       x = 0
+       y = 0
+    elif index == 1:
+        x = 70
+        y = 0
+    elif index == 2:
+        x = 140
+        y = 0
+    elif index == 3:
+        x = 210
+        y = 0
+    elif index == 4:
+        x = 280
+        y = 0
+    elif index == 5:
+        x = 350
+        y = 0
+    elif index == 6:
+        x = 420
+        y = 0
+    elif index == 7:
+        x = 490
+        y = 0
+        
+    elif index == 8:
+        x = 560
+        y = 0
+    
+    elif index == 9:
+        x = 630
+        y = 0
+
+    elif index == 10:
+        x = 0
+        y = 70
+    
+    elif index == 11:
+        x = 70
+        y = 70
+    
+    elif index == 12:
+        x = 140
+        y = 70
+    
+    elif index == 13:
+        x = 210
+        y = 70
+    
+    elif index == 14:
+        x = 280
+        y = 70
+    
+    elif index == 15:
+        x = 350
+        y = 70
+    
+    elif index == 16:
+        x = 420
+        y = 70
+    
+    elif index == 17:
+        x = 490
+        y = 70
+        
+    elif index == 18:
+        x = 560
+        y = 70
+    
+    elif index == 19:
+        x = 630
+        y = 70
+    
+    elif index == 20:
+        x = 0
+        y = 140
+    
+    elif index == 21:
+        x = 70
+        y = 140
+    
+    elif index == 22:
+        x = 140
+        y = 140
+    
+    elif index == 23:
+        x = 210
+        y = 140
+        
+    elif index == 24:
+        x = 280
+        y = 140
+        
+    elif index == 25:
+        x = 350
+        y = 140
+        
+    elif index == 26:
+        x = 420
+        y = 140
+    
+    elif index == 27:
+        x = 140
+        y = 210
+    
+    
+        
+    # Teclas
+
+    width = 70
+    height = 70
+    th = 2
+    if (x == 140 and y == 210):
+        width = 350
+        height = 100
+    
+    if selector is True:
+        cv2.rectangle(teclado, (x + th, y + th), (x + width - th, y + height - th), (255, 255, 255), -1)
+    else:
+        cv2.rectangle(teclado, (x + th, y + th), (x + width - th, y + height - th), (255, 0, 0), th)
+    
+    # Texto 
+    font_scale = 5
+    text_size = cv2.getTextSize(letra, cv2.FONT_HERSHEY_PLAIN, font_scale, 2)[0]
+    width_text, height_text = text_size[0], text_size[1]
+    text_x = int((width - width_text) / 2) + x
+    text_y = int((height + height_text) / 2) + y
+    cv2.putText(teclado, letra, (text_x, text_y), cv2.FONT_HERSHEY_PLAIN, font_scale, (255, 0, 0), 2)
+    
+def criaFrases(index,letra,selector):
+    
+    if index == 0:
+       x = 0
+       y = 0
+    elif index == 1:
+        x = 140
+        y = 0
+    elif index == 2:
+        x = 280
+        y = 0
+    elif index == 3:
+        x = 0
+        y = 80     
+    elif index == 4:
+       x = 350
+       y = 80
+    elif index == 5:
+        x = 0
+        y = 160
+    elif index == 6:
+        x = 350
+        y = 160
+    elif index == 7:
+        x = 0
+        y = 240
+    elif index == 8:
+       x = 150
+       y = 240
+    elif index == 9:
+        x = 300
+        y = 240
+    elif index == 10:
+        x = 450
+        y = 240              
+
+    # Teclas
+
+    width = 110
+    height = 80
+    th = 2
+    if (index == 3 or index == 4 or index == 5 or index == 6):
+        width = 350
+        
+    if (index == 7 or index == 8 or index == 9 or index == 10):
+        width = 150
+        
+    
+
+
+    
+    if selector is True:
+        cv2.rectangle(teclado, (x + th, y + th), (x + width - th, y + height - th), (255, 255, 255), -1)
+    else:
+        cv2.rectangle(teclado, (x + th, y + th), (x + width - th, y + height - th), (255, 0, 0), th)
+    
+    # Texto 
+    font_scale = 3
+    text_size = cv2.getTextSize(letra, cv2.FONT_HERSHEY_PLAIN, font_scale, 2)[0]
+    width_text, height_text = text_size[0], text_size[1]
+    text_x = int((width - width_text) / 2) + x
+    text_y = int((height + height_text) / 2) + y
+    cv2.putText(teclado, letra, (text_x, text_y), cv2.FONT_HERSHEY_PLAIN, font_scale, (255, 0, 0), 2)
+    
+def menu():
+    rows, cols, _ = teclado.shape
+    th_lines = 4 
+    cv2.line(teclado, (int(cols/2) - int(th_lines/2), 0),(int(cols/2) - int(th_lines/2), rows),
+             (51, 51, 51), th_lines)
+    cv2.putText(teclado, "TECLADO", (30, 300), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 5)
+    cv2.putText(teclado, "FRASES", (30 + int(cols/2), 300), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 5)
+
+
 
 def getPiscada(pontos,landmarks):
     p1,p2,p3,p4 = getPontosOlho(landmarks,pontos)
@@ -74,11 +299,30 @@ def getPontosOlho(landmarks,pontos):
     p4 = int(((landmarks.part(pontos[5]).x)+(landmarks.part(pontos[4]).x))/2),int(((landmarks.part(pontos[5]).y)+(landmarks.part(pontos[4]).y))/2)
     
     return p1,p2,p3,p4
+
+quadros = 0
+indice_letra = 0
+quadros_piscada = 0
+texto = ""
+menu_ = False
+
     
 while True:
     _, quadro = cap.read()
+    quadros += 1
+    teclado[:] = (0,0,0)
     quadro_cinza = cv2.cvtColor(quadro,cv2.COLOR_BGR2GRAY)
-
+    print(indice_letra)
+    
+    if opcao == 2:
+        escrever = letras[indice_letra]
+        
+    if opcao == 1:
+        escrever = frases[indice_letra]
+    
+    if menu_ is True:
+        menu()
+    
     rostos = detector(quadro)
     for rosto in rostos:
         bx,by = rosto.left(),rosto.top()
@@ -88,31 +332,115 @@ while True:
 
         piscadaEsquerdo = getPiscada([36,37,38,39,40,41],landmarks)
         piscadaDireito = getPiscada([42,43,44,45,46,47],landmarks)
-              
-        if (piscadaEsquerdo+piscadaDireito)/2 > 5:
+        if (piscadaEsquerdo+piscadaDireito)/2 > 4:
             cv2.putText(quadro,"PISCOU",(50,50),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,255),2,cv2.LINE_AA,False) 
+            quadros_piscada += 1
+            quadros -= 1
+            
+            if(quadros_piscada == 6):
+                if opcao == 1:
+                    quadro_texto[:] = 255
+                    texto = escrever
+                elif opcao == 2:
+                    texto += escrever
+        else:
+            quadros_piscada = 0
+            
+            
         
         razao_olhoEsquerdo = getRazaoOlho([36,37,38,39,40,41],landmarks)
         razao_olhoDireito = getRazaoOlho([42,43,44,45,46,47],landmarks)
         
         razao_olhos = (razao_olhoEsquerdo + razao_olhoDireito)/2
-        
-        if razao_olhos <= 0.7:
+        if razao_olhos <= 0.9:
             cv2.putText(quadro,"direita",(50,100),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
+            #k += 1
+            direcao = 1
+            if menu_ is True:
+                opcao = 1
+                menu_ = False
             
-        elif 0.7<razao_olhos<1.5:
+        elif 0.9<razao_olhos<5.5:
             cv2.putText(quadro,"centro",(50,100),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
         else:
             cv2.putText(quadro,"esquerda",(50,100),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
+            #k -= 1
+            direcao = 0
+            if menu_ is True:
+                opcao = 2
+                menu_ = False
         
         #cv2.putText(quadro,str(razao_olhos),(50,150),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
+    
+    if quadros == 7:
+        if direcao == 1:
+            if menu_ is False:
+                indice_letra += 1
+        else:
+            indice_letra -= 1
+        quadros = 0
         
+        if opcao == 2:
+        
+            if indice_letra == 28:
+                indice_letra = 0
+            if indice_letra == -1:
+                indice_letra = 27
+                
+        if opcao == 1:
+            
+            if indice_letra == 11:
+                indice_letra = 0
+            if indice_letra == -1:
+                indice_letra = 10
+            
+        
+    if opcao == 2:
+        for i in range(28):
+            
+            if i == indice_letra:
+                seleciona = True
+              
+                        
+            else:
+                seleciona = False
+             
+            if menu_ is False:
+                criaTeclado(i,letras[i],seleciona)
+    
+    if opcao == 1:
+            
+        for i in range(11):
+            
+            if i == indice_letra:
+                seleciona = True
+              
+                        
+            else:
+                seleciona = False
+             
+            if menu_ is False:
+                criaFrases(i,frases[i],seleciona)
+            
+        
+        
+    cv2.putText(quadro_texto,texto,(10,100),cv2.FONT_HERSHEY_SIMPLEX,4,0,4)
+        
+   # if menu_ is True:
+    #    cv2.imshow("menu",tela_menu)
+    cv2.moveWindow("quadro", 0,0)
     cv2.imshow("quadro",quadro)
+    cv2.moveWindow("teclado",600,0)
+    cv2.imshow("teclado", teclado)
+    cv2.moveWindow("texto",0,screensize[1] - 300)
+    cv2.imshow("texto", quadro_texto)
+    #cv2.imshow("cinza",quadro_cinza)
+    
 
     key = cv2.waitKey(1)
     if key == 27:
         break
-
+    
 cap.release()
 cv2.destroyAllWindows()
 
