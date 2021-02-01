@@ -4,6 +4,9 @@ import dlib
 from math import hypot
 import time
 import ctypes
+import winsound
+frequency = 2500  # Set Frequency To 2500 Hertz
+duration = 100  # Set Duration To 1000 ms == 1 second
 olho_direito = list(range(36, 42))
 olho_esquerdo = list(range(42, 48))
 sobrancelha_esquerda = list(range(18,22))
@@ -20,16 +23,16 @@ predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 teclado = np.zeros((500,750,3),np.uint8)
 tela_menu = np.zeros((800,800),np.uint8)
 k = 0
-direcao = 1
-opcao = 2
+direcao = 0
+opcao = 0
 
 
 letras = {0: "Q", 1: "W", 2: "E", 3: "R", 4: "T", 5: "Y", 6: "U", 7: "I", 8: "O", 9: "P",
           10: "A", 11: "S", 12: "D", 13: "F", 14: "G", 15: "H", 16: "J", 17: "K", 18: "L", 19: "C",
-          20: "Z", 21: "X", 22: "C", 23: "V", 24: "B", 25: "N", 26: "M" , 27 : " "}
+          20: "Z", 21: "X", 22: "C", 23: "V", 24: "B", 25: "N", 26: "M" , 27 : " ", 28 : "<"}
 
 frases = {0: "OLA", 1: "SIM", 2: "NAO", 3:"ESTOU BEM", 4: "ESTOU MAL", 5: "BANHEIRO", 6: "DESCONFORTO", 7: "FOME", 8: "SEDE",
-          9: "FRIO" , 10: "CALOR"}
+          9: "FRIO" , 10: "CALOR" , 11 : "<"}
 
 def criaTeclado(index,letra,selector):
     
@@ -137,6 +140,10 @@ def criaTeclado(index,letra,selector):
     elif index == 27:
         x = 140
         y = 210
+        
+    elif index == 28:
+        x = 490
+        y = 210
     
     
         
@@ -147,7 +154,7 @@ def criaTeclado(index,letra,selector):
     th = 2
     if (x == 140 and y == 210):
         width = 350
-        height = 100
+        height = 70
     
     if selector is True:
         cv2.rectangle(teclado, (x + th, y + th), (x + width - th, y + height - th), (255, 255, 255), -1)
@@ -160,6 +167,7 @@ def criaTeclado(index,letra,selector):
     width_text, height_text = text_size[0], text_size[1]
     text_x = int((width - width_text) / 2) + x
     text_y = int((height + height_text) / 2) + y
+    print(letra)
     cv2.putText(teclado, letra, (text_x, text_y), cv2.FONT_HERSHEY_PLAIN, font_scale, (255, 0, 0), 2)
     
 def criaFrases(index,letra,selector):
@@ -168,10 +176,10 @@ def criaFrases(index,letra,selector):
        x = 0
        y = 0
     elif index == 1:
-        x = 140
+        x = 110
         y = 0
     elif index == 2:
-        x = 280
+        x = 220
         y = 0
     elif index == 3:
         x = 0
@@ -196,7 +204,10 @@ def criaFrases(index,letra,selector):
         y = 240
     elif index == 10:
         x = 450
-        y = 240              
+        y = 240   
+    elif index == 11:
+       x = 150
+       y = 320
 
     # Teclas
 
@@ -209,10 +220,6 @@ def criaFrases(index,letra,selector):
     if (index == 7 or index == 8 or index == 9 or index == 10):
         width = 150
         
-    
-
-
-    
     if selector is True:
         cv2.rectangle(teclado, (x + th, y + th), (x + width - th, y + height - th), (255, 255, 255), -1)
     else:
@@ -304,7 +311,7 @@ quadros = 0
 indice_letra = 0
 quadros_piscada = 0
 texto = ""
-menu_ = False
+menu_ = True
 
     
 while True:
@@ -312,7 +319,6 @@ while True:
     quadros += 1
     teclado[:] = (0,0,0)
     quadro_cinza = cv2.cvtColor(quadro,cv2.COLOR_BGR2GRAY)
-    print(indice_letra)
     
     if opcao == 2:
         escrever = letras[indice_letra]
@@ -337,12 +343,25 @@ while True:
             quadros_piscada += 1
             quadros -= 1
             
-            if(quadros_piscada == 6):
+            if(quadros_piscada == 7):
                 if opcao == 1:
                     quadro_texto[:] = 255
-                    texto = escrever
+                    if (escrever == "<"):
+                        menu_ = True
+                        indice_letra = 0
+                        texto = ""
+                    else:
+                        texto = escrever
+                    winsound.Beep(frequency, duration)
                 elif opcao == 2:
-                    texto += escrever
+                    if (escrever == "<"):
+                        menu_ = True
+                        indice_letra = 0
+                        texto = ""
+                        quadro_texto[:] = 255
+                    else:
+                        texto += escrever
+                    winsound.Beep(frequency, duration)
         else:
             quadros_piscada = 0
             
@@ -352,15 +371,16 @@ while True:
         razao_olhoDireito = getRazaoOlho([42,43,44,45,46,47],landmarks)
         
         razao_olhos = (razao_olhoEsquerdo + razao_olhoDireito)/2
-        if razao_olhos <= 0.9:
+        if razao_olhos <= 0.75:
             cv2.putText(quadro,"direita",(50,100),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
             #k += 1
             direcao = 1
             if menu_ is True:
                 opcao = 1
                 menu_ = False
+                winsound.Beep(frequency, duration)
             
-        elif 0.9<razao_olhos<5.5:
+        elif 0.75<razao_olhos<1.5:
             cv2.putText(quadro,"centro",(50,100),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
         else:
             cv2.putText(quadro,"esquerda",(50,100),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
@@ -369,6 +389,7 @@ while True:
             if menu_ is True:
                 opcao = 2
                 menu_ = False
+                winsound.Beep(frequency, duration)
         
         #cv2.putText(quadro,str(razao_olhos),(50,150),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
     
@@ -377,26 +398,27 @@ while True:
             if menu_ is False:
                 indice_letra += 1
         else:
-            indice_letra -= 1
+            if menu_ is False:
+                indice_letra -= 1
         quadros = 0
         
         if opcao == 2:
         
-            if indice_letra == 28:
+            if indice_letra == 29:
                 indice_letra = 0
             if indice_letra == -1:
-                indice_letra = 27
+                indice_letra = 28
                 
         if opcao == 1:
             
-            if indice_letra == 11:
+            if indice_letra == 12:
                 indice_letra = 0
             if indice_letra == -1:
-                indice_letra = 10
+                indice_letra = 11
             
         
     if opcao == 2:
-        for i in range(28):
+        for i in range(29):
             
             if i == indice_letra:
                 seleciona = True
@@ -410,7 +432,7 @@ while True:
     
     if opcao == 1:
             
-        for i in range(11):
+        for i in range(12):
             
             if i == indice_letra:
                 seleciona = True
@@ -422,8 +444,7 @@ while True:
             if menu_ is False:
                 criaFrases(i,frases[i],seleciona)
             
-        
-        
+           
     cv2.putText(quadro_texto,texto,(10,100),cv2.FONT_HERSHEY_SIMPLEX,4,0,4)
         
    # if menu_ is True:
