@@ -5,13 +5,21 @@ from math import hypot
 import time
 import ctypes
 import winsound
+import os
+import json
+import sys
+
+
+with open ('config.json') as arquivo:
+    config = json.load(arquivo)
+    
 frequency = 2500  # Set Frequency To 2500 Hertz
 duration = 100  # Set Duration To 1000 ms == 1 second
 olho_direito = list(range(36, 42))
 olho_esquerdo = list(range(42, 48))
 sobrancelha_esquerda = list(range(18,22))
 sobrancelha_direita = list(range(23,27))
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(int(config['webcam']))
 seleciona = False
 quadro_texto = np.zeros((200,1080),np.uint8)
 quadro_texto[:] = 255
@@ -29,7 +37,7 @@ opcao = 0
 
 letras = {0: "Q", 1: "W", 2: "E", 3: "R", 4: "T", 5: "Y", 6: "U", 7: "I", 8: "O", 9: "P",
           10: "A", 11: "S", 12: "D", 13: "F", 14: "G", 15: "H", 16: "J", 17: "K", 18: "L", 19: "C",
-          20: "Z", 21: "X", 22: "C", 23: "V", 24: "B", 25: "N", 26: "M" , 27 : " ", 28 : "<"}
+          20: "Z", 21: "X", 22: "C", 23: "V", 24: "B", 25: "N", 26: "M" , 28 : " ", 29 : "<" , 27 : "<-"}
 
 frases = {0: "OLA", 1: "SIM", 2: "NAO", 3:"ESTOU BEM", 4: "ESTOU MAL", 5: "BANHEIRO", 6: "DESCONFORTO", 7: "FOME", 8: "SEDE",
           9: "FRIO" , 10: "CALOR" , 11 : "<"}
@@ -138,10 +146,14 @@ def criaTeclado(index,letra,selector):
         y = 140
     
     elif index == 27:
+        x = 490
+        y = 140
+        
+    elif index == 28:
         x = 140
         y = 210
         
-    elif index == 28:
+    elif index == 29:
         x = 490
         y = 210
     
@@ -152,10 +164,12 @@ def criaTeclado(index,letra,selector):
     width = 70
     height = 70
     th = 2
-    if (x == 140 and y == 210):
+    if (index == 28):
         width = 350
-        height = 70
-    
+        
+    if (index == 27):
+        width = 140
+            
     if selector is True:
         cv2.rectangle(teclado, (x + th, y + th), (x + width - th, y + height - th), (255, 255, 255), -1)
     else:
@@ -167,7 +181,6 @@ def criaTeclado(index,letra,selector):
     width_text, height_text = text_size[0], text_size[1]
     text_x = int((width - width_text) / 2) + x
     text_y = int((height + height_text) / 2) + y
-    print(letra)
     cv2.putText(teclado, letra, (text_x, text_y), cv2.FONT_HERSHEY_PLAIN, font_scale, (255, 0, 0), 2)
     
 def criaFrases(index,letra,selector):
@@ -283,7 +296,8 @@ def getRazaoOlho(pontos,landmarks):
         #olho_gray = cv2.cvtColor(olho,cv2.COLOR_BGR2GRAY) #imagem do olho convertida para escala de cinza para melhor precisão
         olho = cv2.resize(olho_cinza,None,fx=5,fy=5)
         
-        _,threshold_olho = cv2.threshold(olho_cinza,80,255,cv2.THRESH_BINARY) #feito threshold na imagem cinza para detectar mais precisamente a direção do olho
+        _,threshold_olho = cv2.threshold(olho_cinza,int(config['tsholding']),255,cv2.THRESH_BINARY) #feito threshold na imagem cinza para detectar mais precisamente a direção do olho
+        
         height, width = threshold_olho.shape
         esquerdo_t = threshold_olho[0:height,0:int(width/2)]
         esquerdo_branco = cv2.countNonZero(esquerdo_t)
@@ -293,7 +307,7 @@ def getRazaoOlho(pontos,landmarks):
         if esquerdo_branco == 0:
             razao_olho = 1
         elif direito_branco == 0:
-            razao_olho = 5
+            razao_olho = 1
         else:
             razao_olho = esquerdo_branco/direito_branco
         
@@ -338,7 +352,7 @@ while True:
 
         piscadaEsquerdo = getPiscada([36,37,38,39,40,41],landmarks)
         piscadaDireito = getPiscada([42,43,44,45,46,47],landmarks)
-        if (piscadaEsquerdo+piscadaDireito)/2 > 4:
+        if (piscadaEsquerdo+piscadaDireito)/2 > 4.5:
             cv2.putText(quadro,"PISCOU",(50,50),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,255),2,cv2.LINE_AA,False) 
             quadros_piscada += 1
             quadros -= 1
@@ -354,7 +368,11 @@ while True:
                         texto = escrever
                     winsound.Beep(frequency, duration)
                 elif opcao == 2:
-                    if (escrever == "<"):
+                    if (escrever == "<-"):
+                        print(texto)
+                        texto = texto[:-1]
+                        quadro_texto[:] = 255
+                    elif(escrever == "<"):
                         menu_ = True
                         indice_letra = 0
                         texto = ""
@@ -371,7 +389,8 @@ while True:
         razao_olhoDireito = getRazaoOlho([42,43,44,45,46,47],landmarks)
         
         razao_olhos = (razao_olhoEsquerdo + razao_olhoDireito)/2
-        if razao_olhos <= 0.75:
+        print(razao_olhos)
+        if razao_olhos <= 0.5:
             cv2.putText(quadro,"direita",(50,100),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
             #k += 1
             direcao = 1
@@ -380,7 +399,7 @@ while True:
                 menu_ = False
                 winsound.Beep(frequency, duration)
             
-        elif 0.75<razao_olhos<1.5:
+        elif 0.5<razao_olhos<5:
             cv2.putText(quadro,"centro",(50,100),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
         else:
             cv2.putText(quadro,"esquerda",(50,100),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
@@ -404,10 +423,10 @@ while True:
         
         if opcao == 2:
         
-            if indice_letra == 29:
+            if indice_letra == 30:
                 indice_letra = 0
             if indice_letra == -1:
-                indice_letra = 28
+                indice_letra = 29
                 
         if opcao == 1:
             
@@ -418,7 +437,7 @@ while True:
             
         
     if opcao == 2:
-        for i in range(29):
+        for i in range(30):
             
             if i == indice_letra:
                 seleciona = True
@@ -464,4 +483,38 @@ while True:
     
 cap.release()
 cv2.destroyAllWindows()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
