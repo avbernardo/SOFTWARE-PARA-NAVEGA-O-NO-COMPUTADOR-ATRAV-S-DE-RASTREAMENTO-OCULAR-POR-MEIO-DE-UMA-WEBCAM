@@ -21,7 +21,7 @@ sobrancelha_esquerda = list(range(18,22))
 sobrancelha_direita = list(range(23,27))
 cap = cv2.VideoCapture(int(config['webcam']))
 seleciona = False
-quadro_texto = np.zeros((200,1080),np.uint8)
+quadro_texto = np.zeros((220,1080),np.uint8)
 quadro_texto[:] = 255
 user32 = ctypes.windll.user32
 screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
@@ -326,6 +326,9 @@ indice_letra = 0
 quadros_piscada = 0
 texto = ""
 menu_ = True
+linha = 1
+ultima_letra = ""
+tamanho_fonte = 2
 
     
 while True:
@@ -364,12 +367,12 @@ while True:
                         menu_ = True
                         indice_letra = 0
                         texto = ""
+                        linha = 1
                     else:
                         texto = escrever
                     winsound.Beep(frequency, duration)
                 elif opcao == 2:
                     if (escrever == "<-"):
-                        print(texto)
                         texto = texto[:-1]
                         quadro_texto[:] = 255
                     elif(escrever == "<"):
@@ -377,7 +380,9 @@ while True:
                         indice_letra = 0
                         texto = ""
                         quadro_texto[:] = 255
+                        linha = 1
                     else:
+                        ultima_letra = escrever
                         texto += escrever
                     winsound.Beep(frequency, duration)
         else:
@@ -389,7 +394,6 @@ while True:
         razao_olhoDireito = getRazaoOlho([42,43,44,45,46,47],landmarks)
         
         razao_olhos = (razao_olhoEsquerdo + razao_olhoDireito)/2
-        print(razao_olhos)
         if razao_olhos <= 0.5:
             cv2.putText(quadro,"direita",(50,100),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
             #k += 1
@@ -408,6 +412,7 @@ while True:
             if menu_ is True:
                 opcao = 2
                 menu_ = False
+                linha = 1
                 winsound.Beep(frequency, duration)
         
         #cv2.putText(quadro,str(razao_olhos),(50,150),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
@@ -462,17 +467,38 @@ while True:
              
             if menu_ is False:
                 criaFrases(i,frases[i],seleciona)
-            
+    
+    
+    if (len(texto) > 2 and opcao == 2):
+        linha += 1
+        texto = ""
+        texto += ultima_letra
+    
+    if (linha == 5 and opcao == 2):
+        linha = 1
+        quadro_texto[:] = 255
+        texto = ""
+        texto += ultima_letra
+    
+    if opcao == 1:
+        tamanho_fonte = 4
+        linha = 2
+    else:
+        tamanho_fonte = 2
+        
+             
            
-    cv2.putText(quadro_texto,texto,(10,100),cv2.FONT_HERSHEY_SIMPLEX,4,0,4)
+    cv2.putText(quadro_texto,texto,(5,linha*50),cv2.FONT_HERSHEY_SIMPLEX,tamanho_fonte,0,4)
         
    # if menu_ is True:
     #    cv2.imshow("menu",tela_menu)
+    cv2.resize(quadro, (10,10))
     cv2.moveWindow("quadro", 0,0)
+    
     cv2.imshow("quadro",quadro)
-    cv2.moveWindow("teclado",600,0)
+    cv2.moveWindow("teclado",int(screensize[0]/2.5),0)
     cv2.imshow("teclado", teclado)
-    cv2.moveWindow("texto",0,screensize[1] - 300)
+    cv2.moveWindow("texto",int(screensize[0]/8.5),int(screensize[1]/1.6))
     cv2.imshow("texto", quadro_texto)
     #cv2.imshow("cinza",quadro_cinza)
     
