@@ -33,6 +33,7 @@ tela_menu = np.zeros((800,800),np.uint8)
 k = 0
 direcao = 0
 opcao = 0
+texto_geral = ""
 
 
 letras = {0: "Q", 1: "W", 2: "E", 3: "R", 4: "T", 5: "Y", 6: "U", 7: "I", 8: "O", 9: "P",
@@ -355,7 +356,7 @@ while True:
 
         piscadaEsquerdo = getPiscada([36,37,38,39,40,41],landmarks)
         piscadaDireito = getPiscada([42,43,44,45,46,47],landmarks)
-        if (piscadaEsquerdo+piscadaDireito)/2 > 4.5:
+        if (piscadaEsquerdo+piscadaDireito)/2 > float(config['tamanho_piscada']):   
             cv2.putText(quadro,"PISCOU",(50,50),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,255),2,cv2.LINE_AA,False) 
             quadros_piscada += 1
             quadros -= 1
@@ -373,12 +374,24 @@ while True:
                     winsound.Beep(frequency, duration)
                 elif opcao == 2:
                     if (escrever == "<-"):
+                        linha_aux = 1
+                        texto_aux = ""
                         texto = texto[:-1]
+                        print(texto)
                         quadro_texto[:] = 255
+                        for caracter in texto_geral:
+                            
+                            texto_aux += caracter
+                            #print(texto_aux)
+                            if len(texto_aux) > 30:
+                                linha_aux += 1
+                                texto_aux = ""
+                            cv2.putText(quadro_texto,texto_aux,(5,linha_aux*50),cv2.FONT_HERSHEY_SIMPLEX,1,0,3)
                     elif(escrever == "<"):
                         menu_ = True
                         indice_letra = 0
                         texto = ""
+                        texto_geral = ""
                         quadro_texto[:] = 255
                         linha = 1
                     else:
@@ -387,14 +400,12 @@ while True:
                     winsound.Beep(frequency, duration)
         else:
             quadros_piscada = 0
-            
-            
-        
+                     
         razao_olhoEsquerdo = getRazaoOlho([36,37,38,39,40,41],landmarks)
         razao_olhoDireito = getRazaoOlho([42,43,44,45,46,47],landmarks)
         
         razao_olhos = (razao_olhoEsquerdo + razao_olhoDireito)/2
-        if razao_olhos <= 0.5:
+        if razao_olhos <= float(config['direita_abaixo_de']):
             cv2.putText(quadro,"direita",(50,100),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
             #k += 1
             direcao = 1
@@ -403,7 +414,7 @@ while True:
                 menu_ = False
                 winsound.Beep(frequency, duration)
             
-        elif 0.5<razao_olhos<5:
+        elif float(config['direita_abaixo_de'])<razao_olhos<float(config['esquerda_acima_de']):
             cv2.putText(quadro,"centro",(50,100),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
         else:
             cv2.putText(quadro,"esquerda",(50,100),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
@@ -415,7 +426,7 @@ while True:
                 linha = 1
                 winsound.Beep(frequency, duration)
         
-        #cv2.putText(quadro,str(razao_olhos),(50,150),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),3)
+        cv2.putText(quadro,str(razao_olhos),(50,200),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,255),3)
     
     if quadros == 7:
         if direcao == 1:
@@ -469,7 +480,8 @@ while True:
                 criaFrases(i,frases[i],seleciona)
     
     
-    if (len(texto) > 2 and opcao == 2):
+    if (len(texto) > 30 and opcao == 2):
+        texto_geral += texto
         linha += 1
         texto = ""
         texto += ultima_letra
@@ -484,11 +496,11 @@ while True:
         tamanho_fonte = 4
         linha = 2
     else:
-        tamanho_fonte = 2
+        tamanho_fonte = 1
         
              
            
-    cv2.putText(quadro_texto,texto,(5,linha*50),cv2.FONT_HERSHEY_SIMPLEX,tamanho_fonte,0,4)
+    cv2.putText(quadro_texto,texto,(5,linha*50),cv2.FONT_HERSHEY_SIMPLEX,tamanho_fonte,0,3)
         
    # if menu_ is True:
     #    cv2.imshow("menu",tela_menu)

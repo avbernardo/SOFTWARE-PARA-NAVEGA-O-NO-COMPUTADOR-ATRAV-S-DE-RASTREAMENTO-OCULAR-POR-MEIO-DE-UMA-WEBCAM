@@ -1,4 +1,7 @@
 {
 "webcam" : "1",
-"tsholding" :  "100"
+"tsholding" :  "120",
+"direita_abaixo_de" : "0.85",
+"esquerda_acima_de" : "4",
+"tamanho_piscada" : "4.5"
 }
